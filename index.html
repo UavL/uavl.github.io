@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-lV6iIK+rEEfrwmoqFUFDhdHY2V/rilOmGtbLGFHLEQ0='; style-src 'sha256-MKOGTc/r+EmTqhMMqk3LykBO7Bvf6cBl/W3dvOElVwE='; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pTLLet3cI8TFhj4M2DgbEWkq7p1GdWk9rXvyiNeDeYo='; style-src 'sha256-MKOGTc/r+EmTqhMMqk3LykBO7Bvf6cBl/W3dvOElVwE='; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -453,7 +453,13 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   }
 
   // ── device reveal while scrolling past the spacer ───────────────
-  var devW = 0, layersHidden = false;
+  // While the device is shown, the water and boat are clipped to its screen;
+  // screenRect holds that screen in client coordinates (null otherwise).
+  var devW = 0, layersHidden = false, screenRect = null;
+  function inScreen(x, y) {
+    var q = screenRect;
+    return !q || (x >= q.left && x <= q.right && y >= q.top && y <= q.bottom);
+  }
   function layoutDevice() {
     var layers = [waterCanvas.parentElement, sketch];
     function reset() {
@@ -461,6 +467,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       veil.style.opacity = '';
       stage.style.visibility = 'hidden';
       layersHidden = false;
+      screenRect = null;
     }
     if (!devSpacer.offsetParent) return reset();
     var vw = doc.clientWidth || window.innerWidth, vh = window.innerHeight;
@@ -491,6 +498,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
     var r = devScreen.getBoundingClientRect();
     // Once the device screen has scrolled off, the clipped layers show nothing.
     layersHidden = r.bottom < 0 || r.top > vh;
+    screenRect = r;
     var cl = function (v, m) { return Math.max(0, Math.min(m, v)); };
     layers.forEach(function (l) {
       var lr = l.getBoundingClientRect();
@@ -634,7 +642,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   }
 
   // ── sketch: the boat, its wake, buoys and stones ────────────────
-  var boat = null, drops = [], hover = null, lastW = 0, lastH = 0, ro = null;
+  var boat = null, drops = [], hover = null, lastW = 0, lastH = 0, ro = null, sketchScale = 1;
   var ctx = sketch.getContext('2d');
 
   // Palette from the neutral ramp.
@@ -661,6 +669,8 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
     }
     lastW = sketch.clientWidth;
     lastH = sketch.clientHeight;
+    // sketch units per CSS pixel (W is at least 360 even on narrower screens)
+    sketchScale = W / (lastW || W);
     var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     sketch.width = W * dpr;
     sketch.height = H * dpr;
@@ -833,10 +843,18 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
 
       var snack = null;
       for (var si = 0; si < drops.length; si++) if (drops[si].snack) { snack = drops[si]; break; }
-      var tgt = snack || {
+      var scr = screenRect && {
+        l: screenRect.left * sketchScale, t: screenRect.top * sketchScale,
+        w: screenRect.width * sketchScale, h: screenRect.height * sketchScale
+      };
+      var tgt = snack || (scr ? {
+        // wander inside the device screen, a little low so the mast stays in view
+        x: scr.l + scr.w * 0.5 + Math.cos(t * 0.12 + boat.phase) * scr.w * 0.3,
+        y: scr.t + scr.h * 0.6 + Math.sin(t * 0.17 + boat.phase * 1.7) * scr.h * 0.22
+      } : {
         x: W * 0.5 + Math.cos(t * 0.12 + boat.phase) * W * 0.34,
         y: H * 0.45 + Math.sin(t * 0.17 + boat.phase * 1.7) * H * 0.22
-      };
+      });
       var dx = tgt.x - boat.x, dy = tgt.y - boat.y;
       var dist = Math.hypot(dx, dy);
       var diff = Math.atan2(dy, dx) - boat.a;
@@ -853,8 +871,15 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       boat.x += bf[0] * 18 * dt;
       boat.y += bf[1] * 18 * dt;
       var m = 110;
-      if (boat.x < -m) boat.x = W + m; if (boat.x > W + m) boat.x = -m;
-      if (boat.y < -m) boat.y = H + m; if (boat.y > H + m) boat.y = -m;
+      if (scr) {
+        // Out of sight beyond the screen edge, bring the boat back to just
+        // outside it so it sails in soon instead of roaming the hidden water.
+        boat.x = Math.max(scr.l - m, Math.min(scr.l + scr.w + m, boat.x));
+        boat.y = Math.max(scr.t - m * 0.6, Math.min(scr.t + scr.h + m * 1.2, boat.y));
+      } else {
+        if (boat.x < -m) boat.x = W + m; if (boat.x > W + m) boat.x = -m;
+        if (boat.y < -m) boat.y = H + m; if (boat.y > H + m) boat.y = -m;
+      }
 
       // wake: foam flecks peeling off both quarters, spreading and fading
       var w = boat.wake;
@@ -943,10 +968,9 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
     return !!(el && el.closest && el.closest('a, button, input, h1, h2, h3, p, .item, .stats, .rail, .legal, .hero-actions, footer'));
   }
   function dropAt(e) {
-    if (paused || overUi(e.target)) return;
-    var r = sketch.getBoundingClientRect();
-    var x = (e.clientX - r.left) * ((lastW || r.width) / (r.width || 1));
-    var y = (e.clientY - r.top) * ((lastH || r.height) / (r.height || 1));
+    if (paused || overUi(e.target) || !inScreen(e.clientX, e.clientY)) return;
+    // the sketch canvas is fixed at the viewport origin
+    var x = e.clientX * sketchScale, y = e.clientY * sketchScale;
     var now = vnow();
     var near = boat ? Math.hypot(boat.x - x, boat.y - y) : 1e9;
     if (near < 70) {
@@ -979,8 +1003,8 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   window.addEventListener('pointercancel', function () { tapStart = null; }, { passive: true });
   window.addEventListener('pointermove', function (e) {
     if (e.pointerType === 'touch') return;
-    var on = !overUi(e.target) && !paused;
-    hover = { x: e.clientX, y: e.clientY, t: vnow(), on: on };
+    var on = !overUi(e.target) && !paused && inScreen(e.clientX, e.clientY);
+    hover = { x: e.clientX * sketchScale, y: e.clientY * sketchScale, t: vnow(), on: on };
     var want = on ? 'crosshair' : '';
     if (document.body.style.cursor !== want) document.body.style.cursor = want;
   }, { passive: true });
