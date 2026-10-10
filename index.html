@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-YvMWa5eObbrdGaYjcElbVcOgsODkkDx1TGoCVCFIWwk='; style-src 'sha256-MKOGTc/r+EmTqhMMqk3LykBO7Bvf6cBl/W3dvOElVwE='; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-lV6iIK+rEEfrwmoqFUFDhdHY2V/rilOmGtbLGFHLEQ0='; style-src 'sha256-MKOGTc/r+EmTqhMMqk3LykBO7Bvf6cBl/W3dvOElVwE='; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -842,8 +842,11 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       var diff = Math.atan2(dy, dx) - boat.a;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      boat.a += Math.max(-0.7 * dt, Math.min(0.7 * dt, diff));
-      var v = 30 * Math.min(1, Math.max(0.2, dist / 120));
+      // Heading for a buoy, the boat keeps full speed and steers harder as it
+      // closes in, so it reaches the buoy instead of slowing or circling it.
+      var turn = snack ? 0.7 + 1.8 * Math.max(0, 1 - dist / 150) : 0.7;
+      boat.a += Math.max(-turn * dt, Math.min(turn * dt, diff));
+      var v = snack ? 30 : 30 * Math.min(1, Math.max(0.2, dist / 120));
       boat.x += Math.cos(boat.a) * v * dt;
       boat.y += Math.sin(boat.a) * v * dt;
       var bf = flowVec(boat.x, boat.y, t);
