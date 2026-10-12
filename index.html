@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-t7woeiYMq98gFvVrR69WMUOoAfoqjaeN4cBhgqTg030='; style-src 'sha256-/Bfnq1ZetRBBtLvABprohNJ6hbPTX/Xilh1k/oVpw+Y='; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Msh08Yqwk0pxF6vTts5OZQssuw698Ex2rCMyAIH0fMU='; style-src 'sha256-/Bfnq1ZetRBBtLvABprohNJ6hbPTX/Xilh1k/oVpw+Y='; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -1013,13 +1013,13 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       };
       var drawMainGroup = function () {
         // mast and boom hide behind the cloth when it bellies towards the viewer
-        var front = mainDepth > mY;
+        var front = ey > 0;
         if (front) { drawMast(); drawBoom(); }
         drawSail(main, mainO, [0.16, 0.3, 0.46, 0.62, 0.78], [0.3, 0.4], [0.3, 0.55, 0.78]);
         if (!front) { drawMast(); drawBoom(); }
       };
       var drawJibGroup = function () {
-        var front = jibDepth > (bY + mY) / 2;
+        var front = ey > 0;
         if (front) drawStay();
         drawSail(jib, jibO, [0.25, 0.5, 0.75], null, null);
         if (!front) drawStay();
