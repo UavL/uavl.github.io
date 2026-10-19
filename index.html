@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pXc7Wq5rpDZFD5rQgdRxoINe3NgZ62qfWfMSi7UX7U8='; style-src 'sha256-+reXc+XA1SG89KGt3FSuJsZKg1cFAKf/tIDE9EJjsKo='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mfA8DDCBsV+5LwGWWn8Tq4yAYsF6IyzSFYW5LtKCsow='; style-src 'sha256-+reXc+XA1SG89KGt3FSuJsZKg1cFAKf/tIDE9EJjsKo='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink: a 60 Hz e-ink tablet</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -488,12 +488,27 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   var tier = mq('(update: slow)') || mq('(update: none)') ? 0
     : (saveData || mem <= 2 || cores <= 2) ? 1
     : (isTouch || mem <= 4 || cores <= 4) ? 2 : 3;
-  // ?tier=0..3 previews one tier and holds it there
-  var tierParam = new URLSearchParams(location.search).get('tier');
+  // ?tier=0..3 (or #tier=0..3) previews one tier and holds it there
+  var tierParam = new URLSearchParams(location.search).get('tier') || (location.hash.match(/^#tier=([0-3])$/) || [])[1];
   var forced = /^[0-3]$/.test(tierParam || '');
   if (forced) tier = +tierParam;
   var T = TIERS[tier];
-  function applyTier() { doc.classList.toggle('lite', tier <= 1); }
+  var tierBadge = null;
+  function applyTier() {
+    doc.classList.toggle('lite', tier <= 1);
+    if (!forced) return;
+    // a small label so a forced preview is easy to recognise
+    if (!tierBadge) {
+      tierBadge = document.createElement('div');
+      tierBadge.setAttribute('aria-hidden', 'true');
+      var bs = tierBadge.style;
+      bs.position = 'fixed'; bs.right = '12px'; bs.bottom = '12px'; bs.zIndex = '30'; bs.pointerEvents = 'none';
+      bs.padding = '4px 10px'; bs.borderRadius = '999px'; bs.font = '500 12px/1.4 var(--font)';
+      bs.background = 'var(--n-900)'; bs.color = 'var(--n-100)';
+      document.body.appendChild(tierBadge);
+    }
+    tierBadge.textContent = 'Tier ' + tier + ' · ' + ['Still', 'Lite', 'Balanced', 'Full'][tier];
+  }
   applyTier();
   // average the frame interval over ~2 s; half again over budget steps down
   var gSum = 0, gN = 0;
