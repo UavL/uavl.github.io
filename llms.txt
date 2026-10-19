@@ -1,0 +1,31 @@
+# Segler Ink
+
+> Segler Ink is building an e-ink device that gives up nothing to LCD and OLED screens, and beats them with everything e-ink does better. The project is a privately run prototype, built on the open Modos Labs Glider platform.
+
+## Why a fast e-ink tablet
+
+- Fast enough to be a tablet: scrolling, typing, drawing and video that keep up with the hand. A full tablet, not an ereader you put up with.
+- Easy on the eyes: the image is made of physical ink, not glowing pixels, and the matte surface keeps glare low. A built-in light is there when the room is dark.
+- Clearer in sunlight: the screen reflects ambient light the way paper does. Outdoors it gets easier to read instead of washing out.
+- Power only when the page changes: e-ink holds an image without power. A still page costs almost nothing to keep on screen; only changes draw power.
+- Open foundation: built on the Modos Labs Glider, an open e-ink platform, rather than a closed system.
+
+## Targets
+
+Design targets for the prototype, not measured results.
+
+- Refresh rate: 60 Hz+
+- Input latency: under 30 ms
+- Panel: monochrome
+- Battery: days
+
+## The name
+
+Segler is German for a sailboat, and for a glider: fluid, smooth and fast. The name also nods to the Modos Labs Glider, the open e-ink platform this project builds on.
+
+## Links
+
+- [Website](https://segler-ink.de/)
+- [Impressum](https://segler-ink.de/#impressum)
+- [Datenschutz](https://segler-ink.de/#datenschutz)
+- Contact: lum.rama@segler-ink.de
