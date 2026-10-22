@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mfA8DDCBsV+5LwGWWn8Tq4yAYsF6IyzSFYW5LtKCsow='; style-src 'sha256-+reXc+XA1SG89KGt3FSuJsZKg1cFAKf/tIDE9EJjsKo='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mfA8DDCBsV+5LwGWWn8Tq4yAYsF6IyzSFYW5LtKCsow='; style-src 'sha256-SkS1HUbc2i2DPxPknuvP18A91FsZPc3duUFEhKzLDo8='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink: a 60 Hz e-ink tablet</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -118,10 +118,17 @@ main { position: relative; min-height: 100vh; overflow-x: clip; }
 .rail-mark { display: block; width: 24px; height: 2px; background: var(--a-600); margin-bottom: 14px; }
 .rail-brand { display: flex; align-items: center; gap: 8px; min-height: 44px; color: var(--n-900); font-weight: 500; text-decoration: none; }
 .rail-brand:hover { color: var(--n-900); text-decoration: none; }
-/* in color the logo's sails carry the red stripe and the wave turns blue */
-.logo-stripe { display: none; }
-.is-color .logo-stripe { display: inline; fill: #c0392b; }
-.is-color .logo-wave { fill: #2f7fc4; }
+/* the logo is the favicon's mark in greys; in color it takes the favicon's navy and blue */
+.logo-tile { fill: var(--n-900); }
+.logo-page { fill: var(--n-100); }
+.logo-mid { fill: var(--n-300); }
+.logo-wave { fill: var(--n-500); }
+.is-color .logo-tile { fill: #15284a; }
+.is-color .logo-page { fill: #f7f8fc; }
+.is-color .logo-mid { fill: #b8d3ff; }
+.is-color .logo-wave { fill: #4b9bff; }
+/* black and white like e-ink: the rail's accent is grey until the color preview */
+html:not(.is-color) .rail { --a-300: var(--n-300); --a-600: var(--n-600); --a-700: var(--n-700); }
 .rail-sub { margin-bottom: 18px; }
 .rail-sub.last { margin: 18px 0 0; }
 .rail-nav { display: flex; flex-direction: column; }
@@ -323,7 +330,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
 
     <header class="rail">
       <span class="rail-mark" aria-hidden="true"></span>
-      <a class="rail-brand" href="#top"><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><defs><clipPath id="logo-sails"><path d="M15 45.2V20Q15 16 18 13L30 4Q33 2 33 6C34 20 31 34 25.3 45.3Q20 44.2 15 45.2Z"/><path d="M29 46.1C35 35.5 38 24 37 14Q37 11 40 10L45 8Q48 7 47 10C46 24 40 36.5 31.4 46.7Z"/><path d="M34 47.4C42 39.5 47 30 50 22Q51 19 54 19L58 19Q60 19 59 21C55 32 46.5 42 37 48Z"/></clipPath></defs><path d="M15 45.2V20Q15 16 18 13L30 4Q33 2 33 6C34 20 31 34 25.3 45.3Q20 44.2 15 45.2Z" fill="currentColor"/><path d="M29 46.1C35 35.5 38 24 37 14Q37 11 40 10L45 8Q48 7 47 10C46 24 40 36.5 31.4 46.7Z" fill="currentColor"/><path d="M34 47.4C42 39.5 47 30 50 22Q51 19 54 19L58 19Q60 19 59 21C55 32 46.5 42 37 48Z" fill="currentColor"/><path class="logo-stripe" clip-path="url(#logo-sails)" d="M0 30Q32 22 64 24V31Q32 29 0 37Z"/><path class="logo-wave" d="M6 52C14 46 22 47 32 50C42 53 50 52 58 47C52 55 42 57 32 54C22 51 14 50 6 52Z" fill="currentColor"/></svg>Segler Ink</a>
+      <a class="rail-brand" href="#top"><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="logo-tile" width="64" height="64" rx="14"/><g transform="translate(32 33) scale(0.8) translate(-32 -29.5)"><path class="logo-page" d="M15 45.2V20Q15 16 18 13L30 4Q33 2 33 6C34 20 31 34 25.3 45.3Q20 44.2 15 45.2Z"/><path class="logo-mid" d="M29 46.1C35 35.5 38 24 37 14Q37 11 40 10L45 8Q48 7 47 10C46 24 40 36.5 31.4 46.7Z"/><path class="logo-page" d="M34 47.4C42 39.5 47 30 50 22Q51 19 54 19L58 19Q60 19 59 21C55 32 46.5 42 37 48Z"/><path class="logo-wave" d="M6 52C14 46 22 47 32 50C42 53 50 52 58 47C52 55 42 57 32 54C22 51 14 50 6 52Z"/></g></svg>Segler Ink</a>
       <p class="rail-sub">Faster Electrical Ink</p>
       <nav aria-label="Sections" class="rail-nav">
         <a class="rail-link mono-only" href="#different" data-section="different"><span>Why e-ink</span><svg width="12" height="12" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path d="M128 40v176M56 144l72 72 72-72" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
