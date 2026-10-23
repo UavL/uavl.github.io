@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mfA8DDCBsV+5LwGWWn8Tq4yAYsF6IyzSFYW5LtKCsow='; style-src 'sha256-SkS1HUbc2i2DPxPknuvP18A91FsZPc3duUFEhKzLDo8='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Ek9Ng6OC07TwB3kdfssZB7bEKpz13pXWsxITjJ7a7Nw='; style-src 'sha256-SAEQtjMP56zMjcVmy3lzdCE20Gc02A535BG2IoA+Qdk='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink: a 60 Hz e-ink tablet</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -147,28 +147,6 @@ html:not(.is-color) .rail { --a-300: var(--n-300); --a-600: var(--n-600); --a-70
 .hero { display: flex; flex-direction: column; justify-content: flex-end; gap: 28px; min-height: calc(100vh - 112px); padding-bottom: 72px; }
 .hero h1 { font-size: clamp(44px, 7.4vw, 96px); line-height: 1; letter-spacing: -.035em; max-width: 11ch; text-wrap: balance; }
 .lede { font-size: clamp(17px, 1.5vw, 20px); line-height: 1.6; max-width: 42ch; color: var(--n-800); text-wrap: pretty; }
-.hero-actions { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.hint {
-  display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%;
-  padding: 8px 14px 8px 10px; border: 1px dashed var(--n-400); border-radius: 999px;
-  font-size: 13px; line-height: 1.4; color: var(--n-700); background: color-mix(in srgb, var(--n-100) 85%, transparent);
-}
-.hint[hidden] { display: none; }
-.hint-icon { display: flex; color: var(--a-600); }
-.hint-icon svg { display: none; }
-.hint[data-icon="cursor"] .i-cursor, .hint[data-icon="tap"] .i-tap, .hint[data-icon="done"] .i-done { display: block; }
-
-.pause {
-  display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0;
-  border: 1px solid var(--a-600); border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--n-100) 80%, transparent); color: var(--a-700); cursor: pointer;
-}
-.pause:hover { background: var(--a-100); }
-.pause:active { background: var(--a-200); }
-.pause .i-play { display: none; }
-.pause[aria-pressed="true"] .i-play { display: block; }
-.pause[aria-pressed="true"] .i-pause { display: none; }
-
 /* ── sections ──────────────────────────────────────────────────── */
 section[id] { scroll-margin-top: 24px; }
 .why { display: flex; flex-direction: column; gap: 18px; padding-top: 56px; }
@@ -233,6 +211,8 @@ body:has(.legal:target) .home { display: none; }
 .hero h1 { filter: url(#submerge); opacity: .84; }
 .home .kicker, .lede, .item-num, .item h3, .item p, .stat dd, .stat dt, .note, .foot-about { filter: url(#submerge-soft); }
 #sketch { z-index: 2; }
+/* once the e-reader appears the water is inside its screen, so the text is dry */
+.is-dry .content * { filter: none !important; }
 /* an e-ink style full refresh while the page changes mode */
 .flash { position: fixed; inset: 0; z-index: 20; pointer-events: none; opacity: 0; background: #141519; }
 .flash.is-on { animation: refresh 640ms linear; }
@@ -263,7 +243,6 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   .rail-link svg { display: none; }
   .hero { min-height: calc(100vh - 72px); min-height: calc(100svh - 72px); padding-bottom: 28px; gap: 20px; }
   .hero h1 { font-size: clamp(40px, 13vw, 64px); }
-  .hint { font-size: 13px; padding: 10px 14px 10px 12px; border-radius: 16px; }
   .why, .targets { padding-top: 48px; }
   .item { grid-template-columns: 30px minmax(0, 1fr); padding: 18px 0; }
   .item h3 { font-size: 17px; }
@@ -349,20 +328,6 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
         <h1 id="hero-title"><span class="mono-only">Faster Electrical Ink</span><span class="color-only">Faster Electrical Ink, in color</span></h1>
         <p class="lede mono-only">We are building an e-ink device that gives up nothing to LCD and OLED screens, and beats them with everything e-ink does better.</p>
         <p class="lede color-only">After the monochrome prototype, we want to bring the same speed to a color e-ink tablet: soft, paper-like color that you read in daylight instead of staring into.</p>
-        <div class="hero-actions js-only">
-          <div class="hint" id="hint" data-icon="cursor" role="status">
-            <span class="hint-icon" aria-hidden="true">
-              <svg class="i-cursor" width="16" height="16" viewBox="0 0 256 256" focusable="false"><path d="M96 96v128l32-32 24 48 24-12-24-48h48ZM72 72 52 52M64 116H36M116 64V36" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <svg class="i-tap" width="16" height="16" viewBox="0 0 256 256" focusable="false"><circle cx="128" cy="128" r="30" fill="currentColor"/><circle cx="128" cy="128" r="80" fill="none" stroke="currentColor" stroke-width="16"/></svg>
-              <svg class="i-done" width="16" height="16" viewBox="0 0 256 256" focusable="false"><path d="M40 136l56 56 120-128" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span id="hint-text">Click the open water to drop a buoy. The boat will sail to it.</span>
-          </div>
-          <button class="pause" type="button" aria-pressed="false" aria-label="Pause animation" title="Pause animation">
-            <svg class="i-play" width="14" height="14" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path d="M72 40v176l144-88Z" fill="currentColor"/></svg>
-            <svg class="i-pause" width="14" height="14" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><rect x="56" y="40" width="48" height="176" rx="8" fill="currentColor"/><rect x="152" y="40" width="48" height="176" rx="8" fill="currentColor"/></svg>
-          </button>
-        </div>
       </section>
 
       <section class="why mono-only" id="different" aria-labelledby="different-title">
@@ -449,10 +414,6 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
         <div class="foot-row">
           <span>Segler Ink, 2026</span>
           <nav aria-label="Rechtliches" lang="de"><a href="#impressum">Impressum</a><a href="#datenschutz">Datenschutz</a></nav>
-          <button class="pause js-only" type="button" aria-pressed="false" aria-label="Pause animation" title="Pause animation">
-            <svg class="i-play" width="14" height="14" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path d="M72 40v176l144-88Z" fill="currentColor"/></svg>
-            <svg class="i-pause" width="14" height="14" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><rect x="56" y="40" width="48" height="176" rx="8" fill="currentColor"/><rect x="152" y="40" width="48" height="176" rx="8" fill="currentColor"/></svg>
-          </button>
           <a href="#top">Back to top<svg width="12" height="12" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path d="M128 216V40M56 112l72-72 72 72" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
         </div>
       </footer>
@@ -480,7 +441,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
 
   // ── performance tier ────────────────────────────────────────────
   // 3 full, 2 balanced, 1 lite, 0 still: e-ink and other slow-refresh
-  // screens get one still frame until play is pressed. The tier starts from
+  // screens get one still frame. The tier starts from
   // what the device reports and steps down while frames keep running late.
   //   frame: min ms between boat frames   water: ms between water frames
   //   wScale: water resolution            dpr: boat canvas pixel-ratio cap
@@ -534,70 +495,12 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   var dev = $('dev'), devScreen = $('dev-screen'), devGrip = $('dev-grip'), devCap = $('dev-cap'), devSpacer = $('dev-spacer');
   var stage = dev.parentElement;
   var veil = document.querySelector('.veil');
-  var hint = $('hint'), hintText = $('hint-text');
-  var pauseButtons = document.querySelectorAll('.pause');
   var railLinks = document.querySelectorAll('.rail-link');
 
-  // ── animation clock (pausable) ──────────────────────────────────
-  var paused = reduceMotion || tier === 0, pausedTotal = 0, pauseStart = performance.now(), raf = 0, resumeLoop = null, lastNow = 0, clockStart = null;
-  function vnow() {
-    var now = performance.now();
-    return now - pausedTotal - (paused ? now - pauseStart : 0);
-  }
-  function syncPauseButtons() {
-    var label = paused ? 'Play animation' : 'Pause animation';
-    pauseButtons.forEach(function (b) {
-      b.setAttribute('aria-pressed', String(paused));
-      b.setAttribute('aria-label', label);
-      b.title = label;
-    });
-  }
+  // ── animation clock: reduced motion and e-ink screens get one still frame
+  var paused = reduceMotion || tier === 0, pauseStart = performance.now(), raf = 0, lastNow = 0, clockStart = null;
+  function vnow() { return paused ? pauseStart : performance.now(); }
   var fx = $('fx');
-  function togglePause() {
-    var now = performance.now();
-    if (paused) {
-      pausedTotal += now - pauseStart;
-      paused = false;
-      lastNow = vnow();
-      if (resumeLoop) resumeLoop();
-    } else {
-      paused = true;
-      pauseStart = now;
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
-    }
-    syncPauseButtons();
-    renderHint();
-  }
-  pauseButtons.forEach(function (b) { b.addEventListener('click', togglePause); });
-  syncPauseButtons();
-
-  // ── interaction hint ────────────────────────────────────────────
-  var verb = isTouch ? 'Tap' : 'Click';
-  var hints = [
-    verb + ' the open water to drop a buoy. The boat will sail to it.',
-    'Now ' + verb.toLowerCase() + ' right next to the boat to drop a stone.',
-    'That is all. The water is yours.'
-  ];
-  var hintStage = 0, hintGone = false, hintDoneTimer = 0;
-  function renderHint() {
-    // the hint only makes sense while the water moves
-    hint.hidden = hintGone || paused;
-    hint.dataset.icon = hintStage === 2 ? 'done' : (isTouch ? 'tap' : 'cursor');
-    hintText.textContent = hints[hintStage];
-  }
-  function advanceHint(n) {
-    if (hintGone || n <= hintStage) return;
-    hintStage = n;
-    renderHint();
-    if (n === 2) {
-      clearTimeout(hintDoneTimer);
-      hintDoneTimer = setTimeout(function () { hintGone = true; renderHint(); }, 2500);
-    }
-  }
-  renderHint();
-  setTimeout(function () { hintGone = true; renderHint(); }, 15000);
-
   // ── legal "pages": jump to top when one opens ───────────────────
   var baseTitle = document.title;
   function routeFromHash() {
@@ -648,6 +551,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       dev.style.willChange = '';
       layersHidden = false;
       screenRect = null;
+      doc.classList.remove('is-dry');
     }
     if (!devSpacer.offsetParent) return reset();
     var vw = doc.clientWidth || window.innerWidth, vh = window.innerHeight;
@@ -668,6 +572,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
     if (p <= 0) return reset();
     var extra = Math.max(0, -top - span);
     stage.style.visibility = 'visible';
+    doc.classList.add('is-dry');
     dev.style.willChange = 'transform';
     var e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
     var sw = 121.9 * u, sh = 162.6 * u, dx = -12 * u;
@@ -1328,14 +1233,13 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       try { frameBody(vnow()); } catch (err) { console.warn(err); }
       if (!paused) raf = requestAnimationFrame(frame);
     };
-    resumeLoop = function () { if (!raf) raf = requestAnimationFrame(frame); };
     frame();
   }
 
   // ── pointer: drop a buoy on open water, a stone next to the boat ─
   function overUi(el) {
     // text lies under the water, so only controls and the legal pages block a drop
-    return !!(el && el.closest && el.closest('a, button, input, .legal, .hero-actions'));
+    return !!(el && el.closest && el.closest('a, button, input, .legal'));
   }
   function dropAt(e) {
     if (paused || overUi(e.target) || !inScreen(e.clientX, e.clientY)) return;
@@ -1347,11 +1251,9 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       drops.push({ x: x, y: y, t: now });
       if (drops.length > 12) drops.shift();
       boat.rock = Math.min(1, boat.rock + 0.9);
-      advanceHint(2);
     } else {
       drops = drops.filter(function (d) { return !d.snack; });
       drops.push({ x: x, y: y, t: now, snack: true });
-      advanceHint(1);
       if (boat && near < 220) boat.rock = Math.min(1, boat.rock + (1 - near / 220) * 0.5);
     }
   }
