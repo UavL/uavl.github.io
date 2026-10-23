@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-9nqqvb5JpKK7tWS4+3lfaAP4+YAbOc7aPODoLYfgmDU='; style-src 'sha256-kHe9CNKDjK4Olt5DR58koxsUToxe36CC822WcMxBuBc='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-LOKXiveRZcmZfdustAsZeB0WeGU2OO+ci+mtKlKZM4M='; style-src 'sha256-kHe9CNKDjK4Olt5DR58koxsUToxe36CC822WcMxBuBc='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink: a 60 Hz e-ink tablet</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -785,33 +785,6 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
 
   // ── sketch: the boat, its wake, buoys and stones ────────────────
   var boat = null, drops = [], hover = null, lastW = 0, lastH = 0, ro = null, sketchScale = 1;
-  // The boat sails only on open water. textRects are the text blocks in view,
-  // in sketch units, padded by the boat's size: the mast rises ~100 above the hull,
-  // and the side padding closes the thin strip between the rail and the text.
-  var textEls = document.querySelectorAll('.rail-brand, .rail-sub, .rail-nav, .content .kicker, .hero h1, .lede, .item, .stats, .note, .foot-about, .foot-row, .legal');
-  var textRects = [];
-  function measureText() {
-    var vh = window.innerHeight, k = sketchScale;
-    textRects = [];
-    textEls.forEach(function (el) {
-      var b = el.getBoundingClientRect();
-      if (b.width && b.bottom > -150 && b.top < vh + 150) textRects.push({ l: b.left * k - 60, r: b.right * k + 60, t: b.top * k - 25, b: b.bottom * k + 110, x0: b.left * k, x1: b.right * k, y0: b.top * k, y1: b.bottom * k });
-    });
-  }
-  function onWater(x, y) {
-    for (var i = 0; i < textRects.length; i++) {
-      var r = textRects[i];
-      if (x > r.l && x < r.r && y > r.t && y < r.b) return false;
-    }
-    return true;
-  }
-  function overText(x, y) {
-    for (var i = 0; i < textRects.length; i++) {
-      var r = textRects[i];
-      if (x > r.x0 && x < r.x1 && y > r.y0 && y < r.y1) return true;
-    }
-    return false;
-  }
   var ctx = sketch.getContext('2d');
 
   // Palettes from the neutral ramp and the water bands; re-read when the
@@ -1048,8 +1021,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
 
     // foam dab: a short rounded stroke with a thin dark rim
     var dabs = [];
-    // the wake's foam stays off the text too
-    var dab = function (x1, y1, x2, y2, wd, k) { if (!overText(x1, y1)) dabs.push([x1, y1, x2, y2, wd, k]); };
+    var dab = function (x1, y1, x2, y2, wd, k) { dabs.push([x1, y1, x2, y2, wd, k]); };
     var flushDabs = function () {
       ctx.lineCap = 'round';
       var i, d;
@@ -1091,26 +1063,6 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       trim: 0.6, fill: 1, lee: 0, wind: [0.5, 0.87],
       wake: []
     };
-    // nearest open water to (x, y) with the whole boat in view, or null when
-    // text fills the view. It lies where the padded blocks' edge lines cross.
-    var openNear = function (x, y) {
-      var xs = [x, 46, W - 46], ys = [y, 111, H - 26], best = null, bd = Infinity;
-      textRects.forEach(function (r) { xs.push(r.l - 1, r.r + 1); ys.push(r.t - 1, r.b + 1); });
-      xs.forEach(function (px) {
-        if (px <= 45 || px >= W - 45) return;
-        ys.forEach(function (py) {
-          var d = (px - x) * (px - x) + (py - y) * (py - y);
-          if (py > 110 && py < H - 25 && d < bd && onWater(px, py)) { bd = d; best = { x: px, y: py }; }
-        });
-      });
-      return best;
-    };
-    var offScreen = function () { return { x: boat.x < W / 2 ? -90 : W + 90, y: boat.y }; };
-    if (!screenRect) {
-      measureText();
-      var o0 = openNear(boat.x, boat.y);
-      if (o0) { boat.x = o0.x; boat.y = o0.y; }
-    }
     // one clock across restarts, so resizes and tier changes don't jump the water
     var start = clockStart === null ? (clockStart = vnow()) : clockStart;
     lastNow = vnow();
@@ -1145,9 +1097,6 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
         l: screenRect.left * sketchScale, t: screenRect.top * sketchScale,
         w: screenRect.width * sketchScale, h: screenRect.height * sketchScale
       };
-      if (scr) textRects = []; else measureText();
-      // a buoy the text has scrolled over is lost
-      if (snack && !onWater(snack.x, snack.y)) { drops.splice(drops.indexOf(snack), 1); snack = null; }
       var tgt = snack || (scr ? {
         // wander inside the device screen, a little low so the mast stays in view
         x: scr.l + scr.w * 0.5 + Math.cos(t * 0.12 + boat.phase) * scr.w * 0.3,
@@ -1156,30 +1105,14 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
         x: W * 0.5 + Math.cos(t * 0.12 + boat.phase) * W * 0.34,
         y: H * 0.45 + Math.sin(t * 0.17 + boat.phase * 1.7) * H * 0.22
       });
-      // wander on open water; when text fills the view, wait just off screen
-      if (!scr && !snack) tgt = openNear(tgt.x, tgt.y) || offScreen();
-      // text scrolled over the boat: the water carries it off quickly
-      if (!onWater(boat.x, boat.y)) {
-        var esc = openNear(boat.x, boat.y) || offScreen();
-        var ex = esc.x - boat.x, ey = esc.y - boat.y, ed = Math.hypot(ex, ey), step = Math.min(ed, 240 * dt);
-        if (ed) { boat.x += ex / ed * step; boat.y += ey / ed * step; }
-      }
       var dx = tgt.x - boat.x, dy = tgt.y - boat.y;
       var dist = Math.hypot(dx, dy);
-      // steer round text: try headings either side until the water ahead is open
-      var want = Math.atan2(dy, dx), avoiding = false, look = Math.min(90, dist);
-      for (var tries = 0; tries < 12 && textRects.length; tries++) {
-        var ha = want + (tries % 2 ? 1 : -1) * Math.ceil(tries / 2) * 0.3;
-        if (onWater(boat.x + Math.cos(ha) * look, boat.y + Math.sin(ha) * look) &&
-            onWater(boat.x + Math.cos(ha) * look / 2, boat.y + Math.sin(ha) * look / 2)) { avoiding = tries > 0; want = ha; break; }
-      }
-      var diff = want - boat.a;
+      var diff = Math.atan2(dy, dx) - boat.a;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
       // Heading for a buoy, the boat keeps full speed and steers harder as it
       // closes in, so it reaches the buoy instead of slowing or circling it.
       var turn = snack ? 0.7 + 1.8 * Math.max(0, 1 - dist / 150) : 0.7;
-      if (avoiding) turn = Math.max(turn, 1.6);
       boat.a += Math.max(-turn * dt, Math.min(turn * dt, diff));
       var v = snack ? 30 : 30 * Math.min(1, Math.max(0.2, dist / 120));
       boat.x += Math.cos(boat.a) * v * dt;
@@ -1276,7 +1209,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
           ringAt(hover.x, hover.y, 11, 0.7 * hk, 1.2);
           ctx.beginPath(); ctx.arc(hover.x, hover.y, 3.2, 0, 6.3);
           ctx.fillStyle = rgba(8, 0.8 * hk); ctx.fill();
-        } else if (onWater(hover.x, hover.y)) {
+        } else {
           buoy(hover.x, hover.y, t, 0.4 * hk);
         }
       }
@@ -1313,7 +1246,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       drops.push({ x: x, y: y, t: now });
       if (drops.length > 12) drops.shift();
       boat.rock = Math.min(1, boat.rock + 0.9);
-    } else if (onWater(x, y)) {
+    } else {
       drops = drops.filter(function (d) { return !d.snack; });
       drops.push({ x: x, y: y, t: now, snack: true });
       if (boat && near < 220) boat.rock = Math.min(1, boat.rock + (1 - near / 220) * 0.5);
