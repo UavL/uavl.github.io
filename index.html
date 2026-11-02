@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-6hscEQkwVN1i7hZhIsysmUziC/q0EBmFBFbw21tXN7A='; style-src 'sha256-1m6roChYGlAcSkTKQ2JRUNQ0iOTOvFZiBShC0FvMJCI='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-zLM5MYNkSQXfVOeY+LGvMMWDp+KLBS/mUJv8BRk8Iao='; style-src 'sha256-1m6roChYGlAcSkTKQ2JRUNQ0iOTOvFZiBShC0FvMJCI='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink: a 60 Hz e-ink tablet</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -533,15 +533,16 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   // ── device reveal while scrolling past the spacer ───────────────
   // While the device is shown, the water and boat are clipped to its screen;
   // screenRect holds that screen in client coordinates (null otherwise).
-  var devW = 0, layersHidden = false, screenRect = null;
+  var devW = 0, layersHidden = false, screenRect = null, settled = false;
   function inScreen(x, y) {
     var q = screenRect;
     return !q || (x >= q.left && x <= q.right && y >= q.top && y <= q.bottom);
   }
   function layoutDevice() {
-    var layers = [waterCanvas.parentElement, sketch];
+    var layers = [waterCanvas, sketch];
     function reset() {
-      layers.forEach(function (l) { l.style.clipPath = ''; });
+      layers.forEach(function (l) { l.style.clipPath = l.style.webkitMask = l.style.mask = ''; });
+      settled = false;
       veil.style.opacity = '';
       devCap.style.opacity = '';
       layersHidden = false;
@@ -622,14 +623,21 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
     var r = devScreen.getBoundingClientRect();
     // Once the device screen has scrolled off, the clipped layers show nothing.
     layersHidden = r.bottom < 0 || r.top > vh;
-    // the water closes in from the whole window onto the screen as the tablet settles
+    // the boat's bounds close in from the whole window onto the screen as the tablet settles
     var ql = r.left * e, qt = r.top * e, qr = vw + (r.right - vw) * e, qb = vh + (r.bottom - vh) * e;
     screenRect = { left: ql, top: qt, right: qr, bottom: qb, width: qr - ql, height: qb - qt };
+    settled = e >= 1;
     var cl = function (v, m) { return Math.max(0, Math.min(m, v)); };
     layers.forEach(function (l) {
-      var lr = l.getBoundingClientRect();
-      l.style.clipPath = 'inset(' + cl(qt - lr.top - 1, lr.height) + 'px ' + cl(lr.right - qr - 1, lr.width) + 'px ' +
-        cl(lr.bottom - qb - 1, lr.height) + 'px ' + cl(ql - lr.left - 1, lr.width) + 'px)';
+      var lr = l.getBoundingClientRect(), a = 1 - e;
+      // On the way, everything outside the screen fades out: the mask is opaque
+      // over the screen and 1 - e elsewhere. Settled, a clip does it for less.
+      var mask = settled ? '' : 'linear-gradient(#000,#000) ' + (r.left - lr.left - 1) + 'px ' + (r.top - lr.top - 1) + 'px / ' +
+        (r.width + 2) + 'px ' + (r.height + 2) + 'px no-repeat, linear-gradient(rgba(0,0,0,' + a + '),rgba(0,0,0,' + a + '))';
+      l.style.webkitMask = mask;
+      l.style.mask = mask;
+      l.style.clipPath = settled ? 'inset(' + cl(r.top - lr.top - 1, lr.height) + 'px ' + cl(lr.right - r.right - 1, lr.width) + 'px ' +
+        cl(lr.bottom - r.bottom - 1, lr.height) + 'px ' + cl(r.left - lr.left - 1, lr.width) + 'px)' : '';
     });
     veil.style.opacity = String(1 - e);
     devCap.style.opacity = String(Math.max(0, (e - 0.8) / 0.2));
@@ -1165,7 +1173,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       boat.x += bf[0] * 18 * dt;
       boat.y += bf[1] * 18 * dt;
       var m = 110;
-      if (scr) {
+      if (scr && settled) {
         // Out of sight beyond the screen edge, bring the boat back to just
         // outside it so it sails in soon instead of roaming the hidden water.
         boat.x = Math.max(scr.l - m, Math.min(scr.l + scr.w + m, boat.x));
