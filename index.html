@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-LOKXiveRZcmZfdustAsZeB0WeGU2OO+ci+mtKlKZM4M='; style-src 'sha256-kHe9CNKDjK4Olt5DR58koxsUToxe36CC822WcMxBuBc='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-6hscEQkwVN1i7hZhIsysmUziC/q0EBmFBFbw21tXN7A='; style-src 'sha256-1m6roChYGlAcSkTKQ2JRUNQ0iOTOvFZiBShC0FvMJCI='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink: a 60 Hz e-ink tablet</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -97,13 +97,15 @@ main { position: relative; min-height: 100vh; overflow-x: clip; }
 
 /* ── device reveal ─────────────────────────────────────────────── */
 .dev-stage { position: fixed; inset: 0; z-index: 2; pointer-events: none; visibility: hidden; }
+/* riding with the hero the page scrolls it natively, so it can't lag behind the title on a phone */
+.dev-stage.rides { position: absolute; bottom: auto; }
 .dev {
   position: absolute; left: 50%; top: 50%; width: 320px; height: 362px; margin: -181px 0 0 -160px;
   border: solid var(--n-900); border-width: 19px 62px 19px 14px; border-radius: 18px;
   transform-origin: 50% 50%;
   box-shadow: 0 50px 90px -40px rgba(0,0,0,.55), 0 18px 30px -18px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.55);
 }
-.dev-screen { position: absolute; inset: 0; background: rgba(70,66,52,.05); box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), inset 0 3px 10px rgba(0,0,0,.16); opacity: 0; }
+.dev-screen { position: absolute; inset: 0; background: rgba(70,66,52,.05); box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), inset 0 3px 10px rgba(0,0,0,.16); }
 .dev-grip { position: absolute; top: 0; bottom: 0; left: 100%; width: 62px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5%; padding-bottom: 14%; }
 .dev-grip span { display: block; width: 11%; height: 13%; border-radius: 999px; background: color-mix(in srgb, var(--n-900) 84%, var(--n-100)); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 1px rgba(0,0,0,.4); }
 .dev-cap { position: absolute; left: 50%; top: 50%; width: min(36ch, 86vw); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; opacity: 0; }
@@ -487,6 +489,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   var sketch = $('sketch'), waterCanvas = $('water');
   var dev = $('dev'), devScreen = $('dev-screen'), devGrip = $('dev-grip'), devCap = $('dev-cap'), devSpacer = $('dev-spacer');
   var stage = dev.parentElement;
+  var content = $('content'), heroTitle = $('hero-title'), ledes = document.querySelectorAll('.hero .lede'), kickers = document.querySelectorAll('.hero .kicker'), titleRange = document.createRange();
   var veil = document.querySelector('.veil');
   var railLinks = document.querySelectorAll('.rail-link');
 
@@ -540,13 +543,17 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
     function reset() {
       layers.forEach(function (l) { l.style.clipPath = ''; });
       veil.style.opacity = '';
-      stage.style.visibility = 'hidden';
-      dev.style.willChange = '';
+      devCap.style.opacity = '';
       layersHidden = false;
       screenRect = null;
       doc.classList.remove('is-dry');
     }
-    if (!devSpacer.offsetParent) return reset();
+    if (!devSpacer.offsetParent) {
+      reset();
+      stage.style.visibility = 'hidden';
+      dev.style.willChange = '';
+      return;
+    }
     var vw = doc.clientWidth || window.innerWidth, vh = window.innerHeight;
     var W = Math.min(vw * 0.86, vh * 0.62, 520), H = W * 181.4 / 160.5, u = W / 160.5;
     if (devW !== W) {
@@ -562,34 +569,69 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
     var top = devSpacer.getBoundingClientRect().top;
     var span = Math.max(1, devSpacer.offsetHeight - vh);
     var p = Math.max(0, Math.min(1, (vh * 0.85 - top) / (vh * 0.8)));
-    if (p <= 0) return reset();
-    var extra = Math.max(0, -top - span);
-    stage.style.visibility = 'visible';
-    doc.classList.add('is-dry');
     dev.style.willChange = 'transform';
+    // Where the tablet rests: beside the title, or above it when no room is
+    // beside it. With room to clear the 640px text column it stays pinned on the
+    // right until the morph; otherwise it scrolls away with the hero.
+    titleRange.selectNodeContents(heroTitle);
+    var t = titleRange.getBoundingClientRect(), c = content.getBoundingClientRect();
+    var heroRight = Math.max(t.right, ledes[0].getBoundingClientRect().right, ledes[1].getBoundingClientRect().right);
+    var colRight = Math.max(heroRight, c.left + Math.min(640, c.width));
+    var pin = vw - colRight - 48 >= 160;
+    var left = (pin ? colRight : heroRight) + 24;
+    var w0 = Math.min(vw - left - 24, W * 0.62), x0, y0;
+    if (w0 >= 160) {
+      x0 = left + w0 / 2;
+      y0 = t.top + t.height / 2;
+      if (pin) y0 = Math.max(y0, vh / 2);
+    } else {
+      var kick = (kickers[0].offsetParent ? kickers[0] : kickers[1]).getBoundingClientRect().top;
+      var above = kick - heroTitle.parentElement.getBoundingClientRect().top;
+      w0 = Math.min(W * 0.75, (above - 24) * 160.5 / 181.4);
+      x0 = c.right - w0 / 2;
+      y0 = kick - above / 2;
+    }
+    if (p <= 0) {
+      reset();
+      // too little room to read as a tablet (landscape phones): only the reveal shows
+      stage.style.visibility = w0 < 110 ? 'hidden' : 'visible';
+      stage.classList.toggle('rides', !pin);
+      stage.style.height = pin ? '' : vh + 'px';
+      if (!pin) y0 = Math.round(y0 + window.scrollY);
+      dev.style.transform = 'translate(' + (x0 - vw / 2) + 'px, ' + (y0 - vh / 2) + 'px) scale(' + w0 / W + ')';
+      return;
+    }
+    stage.classList.remove('rides');
+    stage.style.height = '';
+    stage.style.visibility = 'visible';
+    var extra = Math.max(0, -top - span);
+    doc.classList.add('is-dry');
     var e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
     var sw = 121.9 * u, sh = 162.6 * u, dx = -12 * u;
     var s0 = Math.max(vw / sw, vh / sh) * 1.04;
-    var s = Math.exp(Math.log(s0) * (1 - e));
+    // pinned, it grows from its resting pose; if it scrolled away, it comes back
+    // the old way, from a screen that fills the window
+    var s = Math.exp(Math.log(pin ? w0 / W : s0) * (1 - e));
     var lift = Math.max(0, Math.min(44, (vh - H) / 2 - 36));
     // pull the footer up to start just under the caption once the device stops
     // (the footer's own top padding gives the space)
     var mb = Math.min(0, vh / 2 + H / 2 - lift + 22 + devCap.offsetHeight + 24 - vh) + 'px';
     if (devSpacer.style.marginBottom !== mb) devSpacer.style.marginBottom = mb;
-    var tx = -s * dx * (1 - e), ty = -lift * e - extra;
+    var tx = (pin ? x0 - vw / 2 : -s * dx) * (1 - e), ty = (pin ? y0 - vh / 2 : 0) * (1 - e) - lift * e - extra;
     dev.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')';
     var r = devScreen.getBoundingClientRect();
     // Once the device screen has scrolled off, the clipped layers show nothing.
     layersHidden = r.bottom < 0 || r.top > vh;
-    screenRect = r;
+    // the water closes in from the whole window onto the screen as the tablet settles
+    var ql = r.left * e, qt = r.top * e, qr = vw + (r.right - vw) * e, qb = vh + (r.bottom - vh) * e;
+    screenRect = { left: ql, top: qt, right: qr, bottom: qb, width: qr - ql, height: qb - qt };
     var cl = function (v, m) { return Math.max(0, Math.min(m, v)); };
     layers.forEach(function (l) {
       var lr = l.getBoundingClientRect();
-      l.style.clipPath = 'inset(' + cl(r.top - lr.top - 1, lr.height) + 'px ' + cl(lr.right - r.right - 1, lr.width) + 'px ' +
-        cl(lr.bottom - r.bottom - 1, lr.height) + 'px ' + cl(r.left - lr.left - 1, lr.width) + 'px)';
+      l.style.clipPath = 'inset(' + cl(qt - lr.top - 1, lr.height) + 'px ' + cl(lr.right - qr - 1, lr.width) + 'px ' +
+        cl(lr.bottom - qb - 1, lr.height) + 'px ' + cl(ql - lr.left - 1, lr.width) + 'px)';
     });
     veil.style.opacity = String(1 - e);
-    devScreen.style.opacity = String(e);
     devCap.style.opacity = String(Math.max(0, (e - 0.8) / 0.2));
     devCap.style.transform = 'translate(-50%, ' + (H / 2 + ty + 22) + 'px)';
   }
@@ -660,6 +702,8 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   window.addEventListener('scroll', scheduleScroll, { passive: true });
   window.addEventListener('resize', scheduleScroll, { passive: true });
   scheduleScroll();
+  // the Inter webfont changes the title's width, and the tablet sits beside it
+  if (document.fonts) document.fonts.ready.then(scheduleScroll);
 
   // ── water: WebGL2 painted contour bands ─────────────────────────
   var WATER_FS = [
