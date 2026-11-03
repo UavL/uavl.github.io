@@ -6,7 +6,7 @@
 <!-- CSP: the inline style and script blocks are allowed by their SHA-256 hash.
      After editing either block, regenerate both hashes and paste them below:
      python3 -c "import re,hashlib,base64;s=open('index.html','rb').read();[print(t.decode(),'sha256-'+base64.b64encode(hashlib.sha256(b).digest()).decode()) for t,b in re.findall(rb'\n<(style|script)>(.*?)</\1>',s,re.S)]" -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-zLM5MYNkSQXfVOeY+LGvMMWDp+KLBS/mUJv8BRk8Iao='; style-src 'sha256-1m6roChYGlAcSkTKQ2JRUNQ0iOTOvFZiBShC0FvMJCI='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-W2ESgrvfc9Jfmjty6H6Xxjoci8j1FdihU5eCJwX+Xa0='; style-src 'sha256-THP7JnBRuiBjpYaS5sFxCypbcXSvargp5brcmX0v8DY='; img-src 'self' data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Segler Ink – Faster Electrical Ink: a 60 Hz e-ink tablet</title>
 <meta name="description" content="Segler Ink is a fast e-ink tablet project targeting 60 Hz+ refresh and under 30 ms input latency, readable in sunlight and built on the open Modos Labs Glider.">
@@ -212,6 +212,11 @@ body:has(.legal:target) .home { display: none; }
 /* once the e-reader appears the water is inside its screen, so the text is dry */
 .is-dry .content * { filter: none !important; }
 /* an e-ink style full refresh while the page changes mode */
+/* paper grain over everything but the skip link and the refresh flash; drawn once and tiled, so it costs nothing per frame */
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: .13;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .1 0 0 0 0 .12 1.4 0 0 0 -.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
 .flash { position: fixed; inset: 0; z-index: 20; pointer-events: none; opacity: 0; background: #141519; }
 .flash.is-on { animation: refresh 640ms linear; }
 @keyframes refresh {
@@ -265,9 +270,10 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
   html { scroll-behavior: auto; }
   .rail-link { transition: none; }
   .stat { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--n-100); }
+  body::after { display: none; }
 }
 @media print {
-  .layer, .dev-stage, .dev-spacer, .js-only, .flash { display: none !important; }
+  body::after, .layer, .dev-stage, .dev-spacer, .js-only, .flash { display: none !important; }
   .legal { display: flex; }
   .content * { filter: none !important; opacity: 1 !important; }
 }
@@ -567,6 +573,8 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       dev.style.borderRadius = 10 * u + 'px';
       devGrip.style.width = 31 * u + 'px';
     }
+    // a turns the tablet toward the title; 0 is square-on. Perspective follows W so the look holds at any size.
+    var tilt = function (a) { return ' perspective(' + 3 * W + 'px) rotateY(' + -14 * a + 'deg) rotateX(' + 5 * a + 'deg)'; };
     var top = devSpacer.getBoundingClientRect().top;
     var span = Math.max(1, devSpacer.offsetHeight - vh);
     var p = Math.max(0, Math.min(1, (vh * 0.85 - top) / (vh * 0.8)));
@@ -599,7 +607,7 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
       stage.classList.toggle('rides', !pin);
       stage.style.height = pin ? '' : vh + 'px';
       if (!pin) y0 = Math.round(y0 + window.scrollY);
-      dev.style.transform = 'translate(' + (x0 - vw / 2) + 'px, ' + (y0 - vh / 2) + 'px) scale(' + w0 / W + ')';
+      dev.style.transform = 'translate(' + (x0 - vw / 2) + 'px, ' + (y0 - vh / 2) + 'px) scale(' + w0 / W + ')' + tilt(1);
       return;
     }
     stage.classList.remove('rides');
@@ -619,7 +627,8 @@ footer { display: flex; flex-direction: column; gap: 20px; padding-top: 120px; m
     var mb = Math.min(0, vh / 2 + H / 2 - lift + 22 + devCap.offsetHeight + 24 - vh) + 'px';
     if (devSpacer.style.marginBottom !== mb) devSpacer.style.marginBottom = mb;
     var tx = (pin ? x0 - vw / 2 : -s * dx) * (1 - e), ty = (pin ? y0 - vh / 2 : 0) * (1 - e) - lift * e - extra;
-    dev.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')';
+    // square by e = 1, because the settled clip around the screen is a plain rectangle; a window-filling start stays square too
+    dev.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')' + tilt(pin ? 1 - e : 0);
     var r = devScreen.getBoundingClientRect();
     // Once the device screen has scrolled off, the clipped layers show nothing.
     layersHidden = r.bottom < 0 || r.top > vh;
